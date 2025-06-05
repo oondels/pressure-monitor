@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "../SecuritySensor/SecuritySensor.h"
 
 class Buzzer
 {
@@ -8,12 +9,12 @@ public:
   void turnOn();
   void turnOff();
   void test();
-  void beepBuzzer(unsigned long pressure);
+  void beepBuzzer(float pressure, SecuritySensor *securitySensor);
+  bool beepState;
 
 private:
   int pin;
   bool isOn;
   unsigned long lastBeepTime;
   unsigned long beepInterval;
-  bool beepState;
 };

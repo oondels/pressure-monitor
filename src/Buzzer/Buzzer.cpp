@@ -29,9 +29,11 @@ void Buzzer::turnOff()
   }
 }
 
-void Buzzer::beepBuzzer(unsigned long pressure)
+void Buzzer::beepBuzzer(float pressure, SecuritySensor *securitySensor)
 {
-  if (pressure < 2.0)
+  // Se a pressão estiver abaixo ou se o sensor de segurança estiver em alerta +3000ms
+  unsigned long timeActive = securitySensor->getActiveTime();
+  if (pressure < 2.0 || timeActive >= securitySensor->limitActiveTime)
   {
     unsigned long currentMillis = millis();
 
