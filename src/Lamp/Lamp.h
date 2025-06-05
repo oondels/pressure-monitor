@@ -8,10 +8,13 @@ public:
   Lamp(int pin, const char* name);
   static std::vector<Lamp *> lamps;
   static int lampCount;
-  void test();
   void turnOn();
-  void turnOff();
-  // void blinkAlert(unsigned long interval = 500);
+  void blinkAlert();
+  
+  static void test();
+  static Lamp* getLampByName(const char* lampName);
+  static void turnOffLamps();
+  static void toggleLeds(float pressure);
 
 private:
   int pin;
