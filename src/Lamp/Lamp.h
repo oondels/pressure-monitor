@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <vector>
+#include "../SecuritySensor/SecuritySensor.h"
 
 class Lamp
 {
@@ -14,7 +15,7 @@ public:
   static void test();
   static Lamp* getLampByName(const char* lampName);
   static void turnOffLamps();
-  static void toggleLeds(float pressure);
+  static void toggleLeds(float pressure, SecuritySensor *securitySensor = nullptr);
 
 private:
   int pin;

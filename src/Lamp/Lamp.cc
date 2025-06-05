@@ -1,5 +1,9 @@
 #include "Lamp.h"
 
+#define LOW_PRESSURE_THRESHOLD 2.0
+#define HIGH_PRESSURE_THRESHOLD 5.0
+#define BLINK_INTERVAL 500
+
 int Lamp::lampCount = 0;
 std::vector<Lamp *> Lamp::lamps;
 
@@ -68,19 +72,20 @@ void Lamp::turnOffLamps()
 
 Lamp *Lamp::getLampByName(const char *lampName)
 {
-  Lamp *searchedLamp;
+  Lamp *searchedLamp = nullptr;
   for (Lamp *lamp : lamps)
   {
     if (strcmp(lamp->name, lampName) == 0)
     {
       searchedLamp = lamp;
+      break;
     }
   }
 
   return searchedLamp;
 }
 
-void Lamp::toggleLeds(float pressure)
+void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
 {
   Lamp::turnOffLamps();
 
@@ -90,18 +95,24 @@ void Lamp::toggleLeds(float pressure)
     lamp->blinkState = false;
   }
 
-  if (pressure <= 2.0)
+  unsigned long timeActive;
+  if (securitySensor)
+    timeActive = securitySensor->getActiveTime();
+
+  if (pressure <= LOW_PRESSURE_THRESHOLD || (securitySensor && timeActive >= securitySensor->limitActiveTime))
   {
     Lamp *redLamp = getLampByName("Vermelho");
     if (redLamp)
       redLamp->blinkAlert();
   }
-  else if (pressure > 2.0 && pressure < 5.0)
+
+  else if (pressure > LOW_PRESSURE_THRESHOLD && pressure < HIGH_PRESSURE_THRESHOLD)
   {
     Lamp *yellowLamp = getLampByName("Amarelo");
     if (yellowLamp)
       yellowLamp->turnOn();
   }
+
   else
   {
     Lamp *greenLamp = getLampByName("Verde");
