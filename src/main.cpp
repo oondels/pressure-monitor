@@ -1,16 +1,20 @@
 #include "Lamp/Lamp.h"
 #include "Buzzer/Buzzer.h"
 #include "PressureSensor/PressureSensor.h"
+#include "SecuritySensor/SecuritySensor.h"
 
 #define GREEN_LAMP 26
 #define YELLOW_LAMP 25
 #define RED_LAMP 27
 #define BUZZER_PIN 14
+#define SECURITY_PIN 12
 
 #define SENSOR_PIN 34
 float max_pressure = 8.0;
 float min_pressure = 2.0;
+float operatingPressure = 5.0;
 
+SecuritySensor *securitySensor;
 PressureSensor *pressureSensor;
 Buzzer *buzzer;
 Lamp *greenLamp;
@@ -29,7 +33,8 @@ void setup()
   Serial.println("Initializing...");
   delay(1000);
 
-  pressureSensor = new PressureSensor(SENSOR_PIN, max_pressure, min_pressure);
+  pressureSensor = new PressureSensor(SENSOR_PIN, max_pressure, min_pressure, operatingPressure);
+  securitySensor = new SecuritySensor(SECURITY_PIN);
   buzzer = new Buzzer(BUZZER_PIN);
   greenLamp = new Lamp(GREEN_LAMP, "Verde");
   yellowLamp = new Lamp(YELLOW_LAMP, "Amarelo");
@@ -42,24 +47,34 @@ void setup()
 
 void loop()
 {
-  int samples = 20;
-  pressureSensor->readSensorSignal(samples);
-  float pressure = pressureSensor->getPressure();
-
-  // Analize the current pressure
-  Lamp::toggleLeds(pressure);
-  buzzer->beepBuzzer(pressure);
-
-  // Log the current pressure
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastLogTime >= logInterval)
+  SecuritySensor::watchSensor(securitySensor);
+  // Check the sensor
+  if (securitySensor->isActive)
   {
-    Serial.println("Pressure: ");
-    Serial.print(pressure);
-    Serial.println();
-    Serial.println();
+    int samples = 20;
+    pressureSensor->readSensorSignal(samples);
+    float pressure = pressureSensor->getPressure();
 
-    lastLogTime = currentMillis;
+    // Analize the current pressure
+    Lamp::toggleLeds(pressure, securitySensor);
+    buzzer->beepBuzzer(pressure, securitySensor);
+
+    // Log the current pressure
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastLogTime >= logInterval)
+    {
+      Serial.println("Pressure: ");
+      Serial.print(pressure);
+      Serial.println();
+      Serial.println();
+
+      lastLogTime = currentMillis;
+    }
+  }
+  else
+  {
+    buzzer->turnOff();
+    Lamp::turnOffLamps();
   }
 
   delay(10);
