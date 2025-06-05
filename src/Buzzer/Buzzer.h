@@ -3,13 +3,17 @@
 
 class Buzzer
 {
-  public:
-    Buzzer(int pin);
-    void turnOn();
-    void turnOff();
-    void test();
-  
-  private:
-    int pin;
-    bool isOn;
+public:
+  Buzzer(int pin);
+  void turnOn();
+  void turnOff();
+  void test();
+  void beepBuzzer(unsigned long pressure);
+
+private:
+  int pin;
+  bool isOn;
+  unsigned long lastBeepTime;
+  unsigned long beepInterval;
+  bool beepState;
 };
