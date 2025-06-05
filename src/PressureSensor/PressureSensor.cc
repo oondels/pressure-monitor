@@ -3,8 +3,8 @@
 float PressureSensor::sensorSignal = 0.0;
 float PressureSensor::pressure = 0.0;
 
-PressureSensor::PressureSensor(int pin, float maxPressure, float minPressure)
-    : pin(pin), maxPressure(maxPressure), minPressure(minPressure)
+PressureSensor::PressureSensor(int pin, float maxPressure, float minPressure, float operatingPressure)
+    : pin(pin), maxPressure(maxPressure), minPressure(minPressure), operatingPressure(operatingPressure)
 {
   pinMode(this->pin, INPUT);
 }

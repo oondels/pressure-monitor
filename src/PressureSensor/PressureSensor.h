@@ -4,7 +4,8 @@
 class PressureSensor
 {
 public:
-  PressureSensor(int pin, float maxPressure, float minPressure);
+  PressureSensor(int pin, float maxPressure, float minPressure, float operatingPressure);
+  float operatingPressure;
   float getPressure();
   void readSensorSignal(int samples);
 
