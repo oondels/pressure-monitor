@@ -42,12 +42,16 @@ void setup()
 
   Serial.println("Testing components...");
   Lamp::test();
-  buzzer->test();
+  // buzzer->test();
 }
 
 void loop()
 {
-  SecuritySensor::watchSensor(securitySensor);
+  SecuritySensor::watchSensor(securitySensor, buzzer, redLamp);
+  // Serial.print("Tempo ativo: ");
+  // Serial.println(securitySensor->getActiveTime());
+  // Serial.println();
+
   // Check the sensor
   if (securitySensor->isActive)
   {
@@ -57,25 +61,27 @@ void loop()
 
     // Analize the current pressure
     Lamp::toggleLeds(pressure, securitySensor);
-    buzzer->beepBuzzer(pressure, securitySensor);
+    buzzer->beepBuzzer(pressure);
 
     // Log the current pressure
     unsigned long currentMillis = millis();
     if (currentMillis - lastLogTime >= logInterval)
     {
-      Serial.println("Pressure: ");
-      Serial.print(pressure);
-      Serial.println();
-      Serial.println();
-
       lastLogTime = currentMillis;
+      // Serial.println("Pressure: ");
+      // Serial.print(pressure);
+      // Serial.println();
+
     }
   }
   else
   {
+    buzzer->beepState = false;
     buzzer->turnOff();
+
+    redLamp->blinkState = false;
     Lamp::turnOffLamps();
   }
 
-  delay(10);
+  delay(500);
 }
