@@ -1,8 +1,9 @@
 #include "SecuritySensor.h"
 #include "Buzzer/Buzzer.h"
 #include "Lamp/Lamp.h"
+#include "PressureSensor/PressureSensor.h"
 
-#define DELAY_AFTER_ALERT 3000
+#define DELAY_AFTER_ALERT 4000
 
 SecuritySensor::SecuritySensor(int pin)
     : pin(pin), isActive(false), lastState(0), activeTime(0), deactivateTime(0), alert(false), limitActiveTime(3000)
@@ -26,9 +27,22 @@ unsigned long SecuritySensor::getDeactiveTime()
   return millis() - this->deactivateTime;
 }
 
-void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp)
+void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp, PressureSensor *pressureSensor)
 {
   int signal = digitalRead(sensor->pin);
+
+  // RESET do alerta se o botão for pressionado novamente DURANTE o alerta
+  // Detecta borda de subida durante o alerta
+  if (sensor->alert && signal == HIGH && sensor->lastSignal == LOW)
+  {
+    sensor->isActive = false;
+    sensor->deactivateTime = 0;
+    sensor->alert = false;
+    sensor->activeTime = millis();
+
+    sensor->lastSignal = signal; // Atualiza estado
+    return;
+  }
 
   // sensor->isActive = (signal == HIGH);
   // Check se o sinal do sensor esta chegando
@@ -44,7 +58,6 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
         - tiver mais de 3 segundos desativado e com alerta
         - ou se o sinal esta desligado e nao tem alerta
     */
-    // bool isFirstDesactivate = sensor->deactivateTime == 0 && sensor->lastState == HIGH;
     if (sensor->deactivateTime == 0 && sensor->lastState == HIGH)
     {
       sensor->deactivateTime = millis();
@@ -78,11 +91,14 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
     sensor->lastState = !sensor->lastState;
   }
 
+  // Updates the last read signal
+  sensor->lastSignal = signal;
+
   // Verifica se tempo passou e nao chegou pressão para ativar o alerta
   // unsigned long timeActive = millis() - sensor->activeTime;
-  if (sensor->isActive && sensor->getActiveTime() >= sensor->limitActiveTime)
+  if (sensor->isActive && sensor->getActiveTime() >= sensor->limitActiveTime && pressureSensor->getPressure() < 5.0)
   {
-    // buzzer->beepBuzzer(0.0, true);
+    buzzer->beepBuzzer(0.0, true);
     sensor->alert = true;
     lamp->blinkState = true;
     lamp->blinkAlert();

@@ -3,6 +3,7 @@
 
 class Buzzer; 
 class Lamp; 
+class PressureSensor;
 
 class SecuritySensor
 {
@@ -12,11 +13,12 @@ public:
   bool alert;
   bool isActive;
   int lastState;
+  int lastSignal;
   unsigned long deactivateTime;
   unsigned long activeTime;
   unsigned long limitActiveTime;
   unsigned long getActiveTime();
   unsigned long getDeactiveTime();
 
-  static void watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp);
+  static void watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp, PressureSensor *pressureSensor);
 };
