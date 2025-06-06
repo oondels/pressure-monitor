@@ -1,27 +1,28 @@
 #pragma once
 #include <Arduino.h>
 #include <vector>
-#include "../SecuritySensor/SecuritySensor.h"
+#include "SecuritySensor/SecuritySensor.h"
+// Forward declaration - only declares the name, not the full class
 
 class Lamp
 {
 public:
-  Lamp(int pin, const char* name);
+  const char *name;
+  Lamp(int pin, const char *name);
   static std::vector<Lamp *> lamps;
   static int lampCount;
   void turnOn();
-  void blinkAlert();
-  
+  bool blinkState;
+  void blinkAlert(bool securityAlert = false);
+
   static void test();
-  static Lamp* getLampByName(const char* lampName);
+  static Lamp *getLampByName(const char *lampName);
   static void turnOffLamps();
-  static void toggleLeds(float pressure, SecuritySensor *securitySensor = nullptr);
+  static void toggleLeds(float pressure, SecuritySensor *securitySensor);
 
 private:
   int pin;
-  const char* name;
   bool isOn;
   unsigned long lastBlinkTime;
   unsigned long blinkInterval;
-  bool blinkState;
 };

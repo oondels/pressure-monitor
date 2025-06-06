@@ -33,15 +33,13 @@ void Lamp::turnOn()
   }
 };
 
-void Lamp::blinkAlert()
+void Lamp::blinkAlert(bool securityAlert)
 {
   unsigned long currentMillis = millis();
-
-  this->blinkState = true;
-  if (currentMillis - lastBlinkTime >= blinkInterval)
+  if (currentMillis - lastBlinkTime >= blinkInterval && this->blinkState)
   {
-    this->isOn = !this->isOn;
-    digitalWrite(this->pin, this->isOn ? HIGH : LOW);
+    this->isOn = this->isOn == 0 ? HIGH : LOW;
+    digitalWrite(this->pin, this->isOn == 0 ? HIGH : LOW);
     lastBlinkTime = currentMillis;
   }
 }
@@ -95,15 +93,19 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     lamp->blinkState = false;
   }
 
-  unsigned long timeActive;
-  if (securitySensor)
-    timeActive = securitySensor->getActiveTime();
+  // Verifica se o alerta do sensor esta ativo, para manter apenas uma lampada acesa
+  if (securitySensor->alert)
+  {
+    Serial.println("Alerta ativo, skipping...");
+    return;
+  }
 
-  if (pressure <= LOW_PRESSURE_THRESHOLD || (securitySensor && timeActive >= securitySensor->limitActiveTime))
+  if (pressure <= LOW_PRESSURE_THRESHOLD)
   {
     Lamp *redLamp = getLampByName("Vermelho");
     if (redLamp)
-      redLamp->blinkAlert();
+      redLamp->blinkState = true;
+    redLamp->blinkAlert();
   }
 
   else if (pressure > LOW_PRESSURE_THRESHOLD && pressure < HIGH_PRESSURE_THRESHOLD)
