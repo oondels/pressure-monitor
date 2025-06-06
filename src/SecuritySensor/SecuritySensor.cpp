@@ -44,7 +44,6 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
     return;
   }
 
-  // sensor->isActive = (signal == HIGH);
   // Check se o sinal do sensor esta chegando
   if (signal == HIGH)
   {
@@ -68,12 +67,6 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
       sensor->deactivateTime = 0;
       sensor->alert = false;
     }
-
-    //* Log para depuração
-    // if (sensor->isActive && sensor->lastState == HIGH)
-    // {
-    //   Serial.println(sensor->getDeactiveTime());
-    // }
   }
 
   // Verifica se o sensor de segurança esta ativo e grava

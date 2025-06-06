@@ -2,6 +2,7 @@
 #include "Buzzer/Buzzer.h"
 #include "PressureSensor/PressureSensor.h"
 #include "SecuritySensor/SecuritySensor.h"
+#include "MessageManager/Message.h"
 
 #define GREEN_LAMP 26
 #define YELLOW_LAMP 25
@@ -14,17 +15,13 @@ float max_pressure = 8.0;
 float min_pressure = 2.0;
 float operatingPressure = 5.0;
 
+Message *messageManager;
 SecuritySensor *securitySensor;
 PressureSensor *pressureSensor;
 Buzzer *buzzer;
 Lamp *greenLamp;
 Lamp *yellowLamp;
 Lamp *redLamp;
-
-// Variáveis para controle de tempo de log
-// Mover para arquivo independente
-unsigned long lastLogTime = 0;
-unsigned long logInterval = 1000;
 
 void setup()
 {
@@ -33,6 +30,7 @@ void setup()
   Serial.println("Initializing...");
   delay(1000);
 
+  messageManager = new Message(1000);
   pressureSensor = new PressureSensor(SENSOR_PIN, max_pressure, min_pressure, operatingPressure);
   securitySensor = new SecuritySensor(SECURITY_PIN);
   buzzer = new Buzzer(BUZZER_PIN);
@@ -42,15 +40,12 @@ void setup()
 
   Serial.println("Testing components...");
   Lamp::test();
-  // buzzer->test();
+  buzzer->test();
 }
 
 void loop()
 {
   SecuritySensor::watchSensor(securitySensor, buzzer, redLamp, pressureSensor);
-  // Serial.print("Tempo ativo: ");
-  // Serial.println(securitySensor->getActiveTime());
-  // Serial.println();
 
   // Check the sensor
   if (securitySensor->isActive)
@@ -64,15 +59,7 @@ void loop()
     buzzer->beepBuzzer(pressure);
 
     // Log the current pressure
-    unsigned long currentMillis = millis();
-    if (currentMillis - lastLogTime >= logInterval)
-    {
-      lastLogTime = currentMillis;
-      // Serial.println("Pressure: ");
-      // Serial.print(pressure);
-      // Serial.println();
-
-    }
+    messageManager->printMessage("Pressure: " + String(pressure));
   }
   else
   {

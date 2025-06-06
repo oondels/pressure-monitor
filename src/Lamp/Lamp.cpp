@@ -95,17 +95,16 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
 
   // Verifica se o alerta do sensor esta ativo, para manter apenas uma lampada acesa
   if (securitySensor->alert)
-  {
-    Serial.println("Alerta ativo, skipping...");
     return;
-  }
 
   if (pressure <= LOW_PRESSURE_THRESHOLD)
   {
     Lamp *redLamp = getLampByName("Vermelho");
     if (redLamp)
+    {
       redLamp->blinkState = true;
-    redLamp->blinkAlert();
+      redLamp->blinkAlert();
+    }
   }
 
   else if (pressure > LOW_PRESSURE_THRESHOLD && pressure < HIGH_PRESSURE_THRESHOLD)
