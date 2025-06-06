@@ -1,10 +1,10 @@
-# Pressure Monitoring System for Industrial Press Machines
+# PressGuard – Pressure Monitoring System for Industrial Press Machines
 
-> **Robust real-time monitoring and alert system for hydraulic press machines in the footwear industry.**
+> Robust real-time monitoring and alert system for hydraulic press machines in the footwear industry.
 
 ---
 
-## Table of Contents
+## 📚 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -18,26 +18,26 @@
 - [Maintenance & Safety](#maintenance--safety)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
+- [Calibration](#calibration)
 - [Author](#author)
-
 ---
 
 ## Overview
 
-**PressGuard** is an embedded solution designed to monitor the hydraulic pressure of industrial press machines, specifically targeting the footwear sector. The system provides real-time pressure status indication via colored lamps (Green, Yellow, Red) and activates audio and visual alarms to prevent defective production due to insufficient pressing force.
+**PressGuard** is a real-time embedded system that monitors hydraulic pressure in industrial press machines, specifically designed for footwear manufacturing. It categorizes pressure conditions into three states (green, yellow, red) and uses lamps and a buzzer to alert operators of unsafe or suboptimal pressing conditions.
 
 ---
 
 ## Features
 
-- **Real-Time Pressure Monitoring**: Continuously samples pressure with the MPX10DP sensor.
-- **Safety Integration**: Works with the machine’s physical safety guard (safety sensor).
-- **Intelligent Alert Logic**:
-  - **Instant alarm** if pressure < 2 bar.
-  - **Preemptive warning** if pressure < 5 bar after 3 seconds from pressing cycle start.
-- **Operator Feedback**: Visual (multi-color lamps) and audio (buzzer) alerts.
-- **Robust Modular Codebase**: Fully object-oriented C++ for maintainability and scalability.
-- **Scalable**: Easily adapted for other press types or process automation.
+- **Real-Time Pressure Monitoring** using the MPX10DP sensor
+- **Safety Integration** with the physical protective cover of the machine
+- **Smart Alert Logic**:
+  - Immediate alarm if pressure < 2 bar
+  - Delayed alert if pressure < 5 bar after 3 seconds
+- **Operator Feedback** through multi-color lamps and buzzer
+- **Modular and Scalable Codebase** written in C++ (Arduino framework)
+- **Ready for Expansion** to other industrial press systems or IoT networks
 
 ---
 
@@ -45,188 +45,195 @@
 
 - **Microcontroller**: ESP32 Dev Board
 - **Pressure Sensor**: MPX10DP
-- **Signal Amplifier**: For analog sensor reading
-- **Step-down Converter**: Reduces 24V machine supply to 5V/3.3V for ESP32 and peripherals
-- **Interface**:
-  - 3 lamps (Red/Yellow/Green)
-  - 1 Buzzer (alert)
-  - 1 Safety Sensor input (detects guard position)
+- **Signal Amplifier**: LM358 Module (e.g., HW-685)
+- **Power Converter**: Step-down (24V to 5V/3.3V)
+- **Interfaces**:
+  - 3 Indicator Lamps (Green, Yellow, Red)
+  - 1 Buzzer (Alarm)
+  - 1 Safety Sensor (detects lid position)
 
-**Logical Flow:**
+### Logical Flow
 
-1. **Safety Guard Down:** Press cycle starts when safety guard sensor is triggered.
-2. **Pressure Monitoring:** System samples and evaluates pressure via MPX10DP.
-3. **Status Indication:**
-   - Green lamp if pressure > 5 bar.
-   - Yellow lamp if 2 < pressure < 5 bar.
-   - Red lamp + buzzer if pressure < 2 bar (immediate) or < 5 bar after 3 seconds.
-4. **Alerts:** Operator is immediately notified if pressure is inadequate for safe pressing.
+1. **Press Start Triggered** when the safety guard is lowered
+2. **Pressure Sampling** begins
+3. **Condition Evaluation**:
+   - 5 bar: Green Lamp (Optimal)
+   - 2–5 bar: Yellow Lamp (Suboptimal)
+   - < 2 bar: Red Lamp + Buzzer (Critical)
+   - After 3 seconds with < 5 bar: Warning Alert
+4. **Alert Reset** on new pressing cycle
 
 ---
 
 ## Hardware List
 
-| Component             | Description                                   |
-| --------------------- | --------------------------------------------- |
-| ESP32 Dev Board       | Main controller                               |
-| MPX10DP               | Pressure sensor                               |
-| Signal Amplifier      | For MPX10DP (e.g., LM358 module)              |
-| Step-down Converter   | 24V → 5V (e.g., LM2596)                       |
-| Lamps (LED + driver)  | Red, Yellow, Green (e.g., 24V relays or opto) |
-| Buzzer                | 5V/12V buzzer                                 |
-| Safety Sensor         | ----------------------------                  |
-| Wires, resistors, PCB | As needed                                     |
+| Component           | Description                       |
+| ------------------- | --------------------------------- |
+| ESP32 Dev Board     | Core microcontroller              |
+| MPX10DP             | Pressure sensor                   |
+| LM358 Amplifier     | Signal amplification              |
+| Step-down Converter | 24V → 5V DC regulation            |
+| LED Lamps           | Green, Yellow, Red indicators     |
+| Buzzer              | Audio alert                       |
+| Safety Sensor       | Detects guard position            |
+| Misc. Electronics   | Wires, resistors, connectors, PCB |
 
 ---
 
 ## Wiring Diagram
 
+```
+24V Power Supply
+    └──└── [Step-Down] ─────────────────────└──────└──────└── ESP32 (Vcc, GND)
+
+MPX10DP → Amplifier (LM358) → ESP32 (ADC GPIO34)
+
+Safety Sensor → ESP32 (Digital GPIO12)
+
+Lamps & Buzzer → Relays / Drivers → ESP32 GPIOs
+
+```
+
+> Note: Ensure signal GND is common to ESP32 GND. Use opto-isolated drivers for 24V peripherals.
+
 ---
 
 ## How It Works
 
-1. **Initialization:**
-   - On power-up, all components are tested (lamps and buzzer).
-2. **Operation:**
-   - The system enters monitoring mode.
-   - When the safety guard is detected as "down", the ESP32 starts sampling pressure.
-   - Pressure is evaluated and categorized:
-     - **Green:** > 5 bar
-     - **Yellow:** 2 – 5 bar
-     - **Red/Buzzer:** < 2 bar (immediate alarm)
-     - If < 5 bar after 3 seconds, warning alert is triggered.
-   - Lamps are mutually exclusive; only one is on at a time, except during alerts (red lamp blinks).
-3. **Alert Reset:**
-   - Alerts reset automatically if pressing cycle is restarted.
+1. **Startup**: Self-test activates all lamps and buzzer briefly.
+2. **Monitoring**:
+   - The safety sensor detects the lid.
+   - If pressed, the system samples analog pressure.
+   - Logic processes thresholds:
+     - 5 bar: Green
+     - 2–5 bar: Yellow
+     - < 2 bar: Red + Buzzer
+     - < 5 bar for 3+ seconds: Warning state
+3. **Alerts**: Managed through lamp states and buzzer pattern.
+4. **Reset**: On lid reactivation, system resets alert states.
 
 ---
 
 ## Software Structure
 
-**Modular, object-oriented C++ (Arduino framework):**
+Project uses modular C++ structure (Arduino-style):
 
-- `main.cpp`: Initialization and main loop logic.
-- `/Lamp`: Manages lamp states, exclusive operation, and alert blinking.
-- `/Buzzer`: Controls buzzer alerts, with support for timed beeps.
-- `/PressureSensor`: Reads and maps analog input to physical pressure values (bar).
-- `/SecuritySensor`: Detects safety guard state and manages timing for alerts.
+- `main.cpp`: Initialization and loop logic
+- `Lamp/`: Controls lamps and blink logic
+- `Buzzer/`: Manages alert tones and patterns
+- `PressureSensor/`: Converts analog readings to bar pressure
+- `SecuritySensor/`: Tracks safety guard state and timers
 
-**Key Logic:**
-
-- All business rules for alerting and lamp logic are encapsulated in their respective classes.
-- Thresholds and timings are clearly defined and easy to adjust.
+> Logic separation allows scalability and easy maintenance.
 
 ---
 
 ## Installation & Compilation
 
-### Prerequisites
+### Requirements
 
-- [PlatformIO](https://platformio.org/) or Arduino IDE configured for ESP32.
-- Proper wiring according to diagram.
+- [PlatformIO](https://platformio.org/) or Arduino IDE (with ESP32 support)
 
 ### Steps
 
-1. **Clone this repository**
-   ```sh
+1. Clone this repository:
+
+   ```bash
    git clone https://github.com/youruser/pressguard.git
    cd pressguard
+
    ```
-2. **Open in PlatformIO or Arduino IDE**
-3. **Connect your ESP32 via USB**
-4. **Adjust `main.cpp` pin definitions and pressure thresholds as needed**
-5. **Build and upload to ESP32**
+
+2. Open with PlatformIO or Arduino IDE
+3. Adjust pin mappings and pressure thresholds in `main.cpp`
+4. Upload firmware to ESP32 via USB
 
 ---
 
 ## Usage
 
-- **Power on** the system; lamps and buzzer will self-test.
-- **Start machine cycle** by lowering safety guard.
-- **Observe lamps:**
-  - **Green:** Optimal pressure, proceed with pressing.
-  - **Yellow:** Sub-optimal pressure, check hydraulic system.
-  - **Red/Buzzer:** Dangerous low pressure — stop and investigate immediately.
-- **Respond to alerts** as instructed to avoid faulty production or equipment damage.
+- Power the system (via 24V to 5V step-down)
+- Wait for self-test to complete
+- Start press cycle by lowering guard
+- Observe indicators:
+  - **Green**: Normal
+  - **Yellow**: Monitor closely
+  - **Red + Buzzer**: Stop and investigate
 
 ---
 
 ## Maintenance & Safety
 
-- **Regularly calibrate the pressure sensor** for accurate readings.
-- **Visually inspect wiring and connectors** for wear or damage.
-- **Ensure step-down and relays are rated for industrial environment.**
-- **Never bypass safety mechanisms.**
-- **Test system at least once per production shift.**
+- Periodically calibrate pressure sensor
+- Inspect cables and connectors
+- Verify step-down output stability
+- Use proper enclosure and shielding in industrial environments
+- Never bypass safety sensor
 
 ---
 
 ## Troubleshooting
 
-- **No lamp or buzzer activity:**
-  - Check 24V supply and step-down output.
-  - Inspect all wiring and connectors.
-  - Confirm ESP32 firmware upload.
-- **Erratic pressure readings:**
-  - Check amplifier circuit and sensor calibration.
-  - Ensure signal integrity and proper analog reference.
-- **Continuous alert:**
-
-  - Verify hydraulic supply and safety sensor status.
-
-  # Calibração – Sensor de Pressão MPX10GP com Amplificador HW-685
-
-## 🔧 Configuração Física
-
-- **Sensor:** MPX10GP (diferencial, não compensado)
-- **Amplificador:** HW-685 (baseado em LM358)
-- **Microcontrolador:** ESP32
-- **Leitura de sinal:** ADC de 12 bits (0–4095), 3.3V de referência
-
-## 🔌 Esquema de Conexão
-
-| MPX10GP     | HW-685 (LM358) | ESP32         |
-| ----------- | -------------- | ------------- |
-| Pin 3 (+Vs) | VCC (5V)       | —             |
-| Pin 1 (GND) | GND            | GND           |
-| Pin 2 (+Vo) | IN+            | —             |
-| Pin 4 (−Vo) | IN−            | —             |
-| —           | OUT            | GPIO34 (ADC1) |
-
-> Obs.: OUT do HW-685 fornece tensão analógica amplificada proporcional à pressão diferencial.
+| Problem                   | Possible Cause                       |
+| ------------------------- | ------------------------------------ |
+| No lamp/buzzer activity   | Wiring, power supply, or code issue  |
+| Incorrect pressure values | Amplifier miscalibration or noise    |
+| Constant alarm            | Faulty safety sensor or low pressure |
 
 ---
 
-## ⚙️ Ajustes do Amplificador (HW-685)
+## Calibration
 
-O HW-685 possui dois trimpots ajustáveis:
+### Sensor and Amplifier Setup
 
-- **Zero (Offset):** define o nível de saída quando a pressão diferencial é 0.
-  - **Valor calibrado:** `3.6 kΩ` (ajustado até a leitura estabilizar em ~0.01866V na pressão atmosférica)
-- **Span (Ganho):** define quanto a tensão de saída varia conforme a pressão.
-  - **Valor calibrado:** `9.62 kΩ` (ajustado para que a saída chegue até ~0.26676V em 8 BAR)
+- **Sensor**: MPX10DP (differential)
+- **Amplifier**: LM358 module (e.g., HW-685)
+- **ESP32 Input**: GPIO34 (ADC1)
 
-### Resultado da Calibração
+### Wiring Overview
 
-| Pressão (BAR) | Tensão Média (V) |
-| ------------- | ---------------- |
-| 0             | 0.01866          |
-| 1             | 0.09296          |
-| 2             | 0.13836          |
-| 3             | 0.16890          |
-| 4             | 0.19740          |
-| 5             | 0.21561          |
-| 6             | 0.23354          |
-| 6.5           | 0.24             |
-| 7             | 0.24952          |
-| 7.5           | 0.2550           |
-| 8             | 0.26676          |
+| MPX10DP Pin | LM358 Module | ESP32 Pin    |
+| ----------- | ------------ | ------------ |
+| 3 (+Vs)     | VCC (5V)     | —            |
+| 1 (GND)     | GND          | GND          |
+| 2 (+Vo)     | IN+          | —            |
+| 4 (−Vo)     | IN−          | —            |
+| —           | OUT          | GPIO34 (ADC) |
+
+### Amplifier Adjustment
+
+- **Offset (Zero)** Pot: Adjust until ~0.01866V at 0 bar
+- **Gain (Span)** Pot: Adjust until ~0.26676V at 8 bar
+
+### Pressure-to-Voltage Reference Table
+
+| Pressure (BAR) | Output Voltage (V) |
+| -------------- | ------------------ |
+| 0              | 0.01866            |
+| 1              | 0.09296            |
+| 2              | 0.13836            |
+| 3              | 0.16890            |
+| 4              | 0.19740            |
+| 5              | 0.21561            |
+| 6              | 0.23354            |
+| 7              | 0.24952            |
+| 7.5            | 0.25500            |
+| 8              | 0.26676            |
+
+---
+
+## 📄 License
+
+MIT License — Free for personal and commercial use with attribution.
 
 ---
 
 ## Author
 
-**Hendrius Félix Cerqueira Gomes de Santana**  
-Mechanical Engineer, Software Developer (PUC-Rio), IoT & Industrial Automation Specialist.
+**Hendrius Félix Cerqueira Gomes de Santana**
+
+Mechanical Engineer, Full Stack Developer, IoT & Industrial Automation Specialist
+
+MBA in Software Engineering (PUC-Rio)
 
 ---
