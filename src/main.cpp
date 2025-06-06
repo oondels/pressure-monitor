@@ -47,7 +47,7 @@ void setup()
 
 void loop()
 {
-  SecuritySensor::watchSensor(securitySensor, buzzer, redLamp);
+  SecuritySensor::watchSensor(securitySensor, buzzer, redLamp, pressureSensor);
   // Serial.print("Tempo ativo: ");
   // Serial.println(securitySensor->getActiveTime());
   // Serial.println();
@@ -83,5 +83,5 @@ void loop()
     Lamp::turnOffLamps();
   }
 
-  delay(500);
+  delay(10);
 }
