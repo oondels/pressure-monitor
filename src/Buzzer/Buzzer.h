@@ -8,8 +8,10 @@ public:
   void turnOn();
   void turnOff();
   void test();
+  void reset();
   void beepBuzzer(float pressure = 0.0, bool securityAlert = false);
   bool beepState;
+
 
 private:
   int pin;

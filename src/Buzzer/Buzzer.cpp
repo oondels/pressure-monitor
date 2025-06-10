@@ -14,6 +14,13 @@ void Buzzer::test()
   turnOff();
 }
 
+void Buzzer::reset()
+{
+  this->beepState = false;
+  this->turnOff();
+  this->lastBeepTime = 0;
+}
+
 void Buzzer::turnOn()
 {
   this->isOn = true;
@@ -45,6 +52,5 @@ void Buzzer::beepBuzzer(float pressure, bool securityAlert)
     return;
   }
 
-  this->beepState = false;
-  this->turnOff();
+  this->reset();
 }
