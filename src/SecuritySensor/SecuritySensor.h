@@ -1,24 +1,38 @@
 #pragma once
 #include <Arduino.h>
 
-class Buzzer; 
-class Lamp; 
+class Buzzer;
+class Lamp;
 class PressureSensor;
+
+enum class SensorState {
+  INACTIVE,
+  ACTIVE,
+  ALERT
+};
 
 class SecuritySensor
 {
-public:
-  SecuritySensor(int pin);
+private:
   int pin;
   bool alert;
-  bool isActive;
+  bool isOn;
   int lastState;
   int lastSignal;
   unsigned long deactivateTime;
   unsigned long activeTime;
   unsigned long limitActiveTime;
+
+public:
+  SecuritySensor(int pin);
   unsigned long getActiveTime();
   unsigned long getDeactiveTime();
+  void reset();
+  void active();
+  void deactivate();
+  bool isActive();
+  bool isAlert() const { return alert; }
+  void transitionState(SensorState newState);
 
   static void watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp, PressureSensor *pressureSensor);
 };
