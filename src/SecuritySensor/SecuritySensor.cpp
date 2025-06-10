@@ -6,7 +6,7 @@
 #define DELAY_AFTER_ALERT 4000
 
 SecuritySensor::SecuritySensor(int pin)
-    : pin(pin), isOn(false), lastState(LOW), activeTime(0), deactivateTime(0), alert(false), limitActiveTime(3000)
+    : pin(pin), isOn(false), lastState(LOW), activeTime(0), deactivateTime(0), alert(false), limitActiveTime(3000), alertTime(0), limitAlertTime(4000), lastAlertState(false)
 {
   pinMode(this->pin, INPUT);
 }
@@ -21,7 +21,7 @@ void SecuritySensor::active()
   this->isOn = true;
   this->lastSignal = HIGH;
   this->deactivateTime = 0;
-  if  (this->isActive() && this->lastState == LOW)
+  if (this->isActive() && this->lastState == LOW)
   {
     this->lastState = HIGH;
     this->activeTime = millis();
@@ -32,6 +32,8 @@ void SecuritySensor::deactivate()
 {
   this->isOn = false;
   this->alert = false;
+  this->lastAlertState = false;
+  this->alertTime = 0;
   this->lastState = LOW;
   this->activeTime = 0;
   this->deactivateTime = millis();
@@ -48,8 +50,14 @@ void SecuritySensor::transitionState(SensorState newState)
     this->active();
     break;
   case SensorState::ALERT:
+    this->deactivateTime = 0;
     this->alert = true;
     this->isOn = true;
+    if (!this->lastAlertState)
+    {
+      this->alertTime = millis();
+      this->lastAlertState = true;
+    }
     break;
   }
 }
@@ -57,6 +65,8 @@ void SecuritySensor::transitionState(SensorState newState)
 void SecuritySensor::reset()
 {
   this->alert = false;
+  this->alertTime = 0;
+  this->lastAlertState = false;
   this->isOn = false;
   this->lastState = LOW;
   this->lastSignal = LOW;
@@ -64,11 +74,19 @@ void SecuritySensor::reset()
   this->activeTime = 0;
 }
 
+unsigned long SecuritySensor::getAlertTime()
+{
+  if (!this->isAlert())
+    return 0;
+
+  return millis() - this->alertTime;
+}
+
 unsigned long SecuritySensor::getActiveTime()
 {
   if (!this->isActive())
-  return 0;
-  
+    return 0;
+
   return millis() - this->activeTime;
 }
 
@@ -90,11 +108,18 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
     sensor->activeTime = millis();
     sensor->lastSignal = signal;
     sensor->lastState = signal;
-    
+
     // Reset all components
     Lamp::reset();
     buzzer->reset();
     sensor->reset();
+    return;
+  }
+
+  // Verifica se o tempo de alerta passou
+  if (sensor->getAlertTime() >= sensor->limitAlertTime)
+  {
+    sensor->transitionState(SensorState::INACTIVE);
     return;
   }
 
@@ -132,14 +157,10 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
   sensor->lastSignal = signal;
 
   // Verifica se tempo passou e nao chegou pressão para ativar o alerta
-  // unsigned long timeActive = millis() - sensor->activeTime;
-  // Serial.printf("Sensor is alert ?: %s\n", sensor->isAlert() ? "Yes" : "No");
-  // Serial.printf("Sensor active time: %lu ms\n", sensor->getActiveTime());
-  // Serial.printf("Sensor is active ?: %s\n", sensor->isActive() ? "Yes" : "No");
-  // Serial.printf("Sensor is active ?: %s\n", sensor->isActive() ? "Yes" : "No");
   if (sensor->isActive() && sensor->getActiveTime() >= sensor->limitActiveTime && pressureSensor->getPressure() < 5.0)
   {
     sensor->transitionState(SensorState::ALERT);
+
     buzzer->beepBuzzer(0.0, true);
     lamp->blinkState = true;
     lamp->blinkAlert();
