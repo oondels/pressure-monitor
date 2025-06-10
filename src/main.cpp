@@ -45,10 +45,11 @@ void setup()
 
 void loop()
 {
-  SecuritySensor::watchSensor(securitySensor, buzzer, redLamp, pressureSensor);
+  IAlertDevice *alertDevices[] = {redLamp, buzzer};
+  CompoundAlert alertSystem(alertDevices, 2);
+  SecuritySensor::watchSensor(alertSystem, pressureSensor, securitySensor);
 
   // Check the sensor
-
   if (securitySensor->isActive())
   {
     int samples = 20;
@@ -57,18 +58,17 @@ void loop()
 
     // Analyze the current pressure
     Lamp::toggleLeds(pressure, securitySensor);
-    buzzer->beepBuzzer(pressure);
+    buzzer->triggerAlert();
 
     // Log the current pressure
-    messageManager->printMessage("Pressure: " + String(pressure));
+    // messageManager->printMessage("Pressure: " + String(pressure));
   }
   else
   {
-    buzzer->reset();
-    Lamp::reset();
+    alertSystem.reset();
     securitySensor->reset();
     pressureSensor->readSensorSignal(0); // Reset the sensor signal
   }
 
-  delay(500);
+  delay(50);
 }
