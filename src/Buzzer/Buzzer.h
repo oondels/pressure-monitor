@@ -1,15 +1,17 @@
 #pragma once
 #include <Arduino.h>
+#include "SecuritySensor/SecuritySensor.h"
+#include "Alert/IAlertDevice.h"
 
-class Buzzer
+class Buzzer : public IAlertDevice
 {
 public:
   Buzzer(int pin);
   void turnOn();
   void turnOff();
   void test();
-  void reset();
-  void beepBuzzer(float pressure = 0.0, bool securityAlert = false);
+  void reset() override;
+  void triggerAlert() override;
   bool beepState;
 
 
@@ -18,4 +20,5 @@ private:
   bool isOn;
   unsigned long lastBeepTime;
   unsigned long beepInterval;
+  void beepBuzzer();
 };

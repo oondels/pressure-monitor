@@ -1,4 +1,5 @@
 #include "Lamp.h"
+#include "SecuritySensor/SecuritySensor.h"
 
 #define LOW_PRESSURE_THRESHOLD 2.0
 #define HIGH_PRESSURE_THRESHOLD 5.0
@@ -33,15 +34,21 @@ void Lamp::turnOn()
   }
 };
 
-void Lamp::blinkAlert(bool securityAlert)
+void Lamp::blinkAlert()
 {
   unsigned long currentMillis = millis();
-  if (currentMillis - lastBlinkTime >= blinkInterval && this->blinkState)
+  if (currentMillis - lastBlinkTime >= blinkInterval && blinkState)
   {
-    this->isOn = this->isOn == 0 ? HIGH : LOW;
-    digitalWrite(this->pin, this->isOn == 0 ? HIGH : LOW);
+    isOn = isOn == 0 ? HIGH : LOW;
+    digitalWrite(pin, isOn == 0 ? HIGH : LOW);
     lastBlinkTime = currentMillis;
   }
+}
+
+void Lamp::triggerAlert()
+{
+  this->blinkState = true;
+  this->blinkAlert();
 }
 
 // Static Methods
@@ -114,7 +121,7 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     if (redLamp)
     {
       redLamp->blinkState = true;
-      redLamp->blinkAlert();
+      redLamp->triggerAlert();
     }
   }
 

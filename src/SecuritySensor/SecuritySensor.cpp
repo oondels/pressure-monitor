@@ -1,9 +1,7 @@
 #include "SecuritySensor.h"
-#include "Buzzer/Buzzer.h"
-#include "Lamp/Lamp.h"
 #include "PressureSensor/PressureSensor.h"
 
-#define DELAY_AFTER_ALERT 4000
+#define DELAY_AFTER_ALERT 6000
 
 SecuritySensor::SecuritySensor(int pin)
     : pin(pin), isOn(false), lastState(LOW), activeTime(0), deactivateTime(0), alert(false), limitActiveTime(3000), alertTime(0), limitAlertTime(4000), lastAlertState(false)
@@ -36,6 +34,8 @@ void SecuritySensor::deactivate()
   this->alertTime = 0;
   this->lastState = LOW;
   this->activeTime = 0;
+  if (this->lastSignal == HIGH)
+    this->lastSignal = LOW;
   this->deactivateTime = millis();
 }
 
@@ -98,72 +98,60 @@ unsigned long SecuritySensor::getDeactiveTime()
   return millis() - this->deactivateTime;
 }
 
-void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp, PressureSensor *pressureSensor)
+void SecuritySensor::watchSensor(IAlertDevice &alertSystem, PressureSensor *pressureSensor, SecuritySensor *securitySensor)
 {
-  int signal = digitalRead(sensor->pin);
+  int signal = digitalRead(securitySensor->pin);
 
   // RESET do alerta se o botão for pressionado novamente DURANTE o alerta
-  if (sensor->alert && signal == HIGH && sensor->lastSignal == LOW)
+  if (securitySensor->alert && signal == HIGH && securitySensor->lastSignal == LOW)
   {
-    sensor->activeTime = millis();
-    sensor->lastSignal = signal;
-    sensor->lastState = signal;
+    securitySensor->activeTime = millis();
+    securitySensor->lastSignal = signal;
+    securitySensor->lastState = signal;
 
     // Reset all components
-    Lamp::reset();
-    buzzer->reset();
-    sensor->reset();
+    alertSystem.reset();
+    securitySensor->reset();
     return;
   }
 
   // Verifica se o tempo de alerta passou
-  if (sensor->getAlertTime() >= sensor->limitAlertTime)
+  if (securitySensor->getAlertTime() >= securitySensor->limitAlertTime)
   {
-    sensor->transitionState(SensorState::INACTIVE);
+    securitySensor->transitionState(SensorState::INACTIVE);
     return;
   }
 
   // Check se o sinal do sensor esta chegando
   if (signal == HIGH)
   {
-    sensor->transitionState(SensorState::ACTIVE);
+    securitySensor->transitionState(SensorState::ACTIVE);
   }
   else
   {
     /*
       - Verifica se é a primeira desativação e registra o momento (ms)
-      - reseta o alerta e tem desativado se:
-        - tiver mais de 3 segundos desativado e com alerta
-        - ou se o sinal esta desligado e nao tem alerta
+      - reseta o alerta se o sensor esta ativo e nao tem alerta
     */
-    if (sensor->deactivateTime == 0 && sensor->lastState == HIGH)
+    if (securitySensor->deactivateTime == 0 && securitySensor->lastState == HIGH)
     {
-      sensor->deactivateTime = millis();
+      securitySensor->deactivateTime = millis();
     }
-    else if (sensor->getDeactiveTime() >= DELAY_AFTER_ALERT || (signal == LOW && !sensor->alert))
+    else if (!securitySensor->alert && securitySensor->isActive())
     {
-      sensor->transitionState(SensorState::INACTIVE);
+      securitySensor->reset();
     }
-  }
-
-  // Reseta se o sensor for desativado
-  if (sensor->lastState && !sensor->isActive())
-  {
-    sensor->reset();
-    sensor->lastState = !sensor->lastState;
   }
 
   // Updates the last read signal
-  sensor->lastSignal = signal;
+  securitySensor->lastSignal = signal;
 
   // Verifica se tempo passou e nao chegou pressão para ativar o alerta
-  if (sensor->isActive() && sensor->getActiveTime() >= sensor->limitActiveTime && pressureSensor->getPressure() < 5.0)
+  if (securitySensor->isActive() && securitySensor->getActiveTime() >= securitySensor->limitActiveTime && pressureSensor->getPressure() < 5.0)
   {
-    sensor->transitionState(SensorState::ALERT);
+    securitySensor->transitionState(SensorState::ALERT);
 
-    buzzer->beepBuzzer(0.0, true);
-    lamp->blinkState = true;
-    lamp->blinkAlert();
+    alertSystem.triggerAlert();
     return;
   }
 };

@@ -36,21 +36,22 @@ void Buzzer::turnOff()
   }
 }
 
-void Buzzer::beepBuzzer(float pressure, bool securityAlert)
+void Buzzer::triggerAlert()
 {
-  if (pressure < 2.0 || securityAlert)
+  this->beepState = true;
+  this->beepBuzzer();
+}
+
+void Buzzer::beepBuzzer()
+{
+  unsigned long currentMillis = millis();
+
+  this->beepState = true;
+  if (currentMillis - lastBeepTime >= beepInterval)
   {
-    unsigned long currentMillis = millis();
-
-    this->beepState = true;
-    if (currentMillis - lastBeepTime >= beepInterval)
-    {
-      this->isOn = !this->isOn;
-      digitalWrite(this->pin, isOn ? HIGH : LOW);
-      lastBeepTime = currentMillis;
-    }
-    return;
+    this->isOn = !this->isOn;
+    digitalWrite(this->pin, isOn ? HIGH : LOW);
+    lastBeepTime = currentMillis;
   }
-
-  this->reset();
+  return;
 }

@@ -1,9 +1,9 @@
 #pragma once
 #include <Arduino.h>
-
-class Buzzer;
-class Lamp;
-class PressureSensor;
+#include "Buzzer/Buzzer.h"
+#include "Lamp/Lamp.h"
+#include "PressureSensor/PressureSensor.h"
+#include "Alert/IAlertDevice.h"
 
 enum class SensorState {
   INACTIVE,
@@ -39,5 +39,5 @@ public:
   void transitionState(SensorState newState);
   
 
-  static void watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *lamp, PressureSensor *pressureSensor);
+  static void watchSensor(IAlertDevice& alertDevice, PressureSensor *pressureSensor, SecuritySensor *securitySensor);
 };
