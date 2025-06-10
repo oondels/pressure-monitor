@@ -56,6 +56,16 @@ void Lamp::test()
   }
 }
 
+void Lamp::reset()
+{
+ for (Lamp *lamp : lamps)
+ {
+  lamp->isOn = false;
+  lamp->blinkState = false;
+  digitalWrite(lamp->pin, HIGH);
+ }
+}
+
 void Lamp::turnOffLamps()
 {
   for (Lamp *lamp : lamps)
@@ -63,6 +73,7 @@ void Lamp::turnOffLamps()
     if (!lamp->blinkState)
     {
       lamp->isOn = false;
+      lamp->blinkState = false;
       digitalWrite(lamp->pin, HIGH);
     }
   }
@@ -94,7 +105,7 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
   }
 
   // Verifica se o alerta do sensor esta ativo, para manter apenas uma lampada acesa
-  if (securitySensor->alert)
+  if (securitySensor->isAlert())
     return;
 
   if (pressure <= LOW_PRESSURE_THRESHOLD)
@@ -107,14 +118,17 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     }
   }
 
-  else if (pressure > LOW_PRESSURE_THRESHOLD && pressure < HIGH_PRESSURE_THRESHOLD)
+  if (pressure > LOW_PRESSURE_THRESHOLD && pressure < HIGH_PRESSURE_THRESHOLD)
   {
     Lamp *yellowLamp = getLampByName("Amarelo");
     if (yellowLamp)
+    {
       yellowLamp->turnOn();
+      yellowLamp->isOn = true;
+    }
   }
 
-  else
+  else if (pressure >= HIGH_PRESSURE_THRESHOLD)
   {
     Lamp *greenLamp = getLampByName("Verde");
     if (greenLamp)

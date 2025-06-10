@@ -9,13 +9,14 @@ class Lamp
 public:
   const char *name;
   Lamp(int pin, const char *name);
-  static std::vector<Lamp *> lamps;
-  static int lampCount;
   void turnOn();
   bool blinkState;
   void blinkAlert(bool securityAlert = false);
 
   static void test();
+  static std::vector<Lamp *> lamps;
+  static int lampCount;
+  static void reset();
   static Lamp *getLampByName(const char *lampName);
   static void turnOffLamps();
   static void toggleLeds(float pressure, SecuritySensor *securitySensor);
