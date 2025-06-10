@@ -8,7 +8,7 @@
 #define YELLOW_LAMP 25
 #define RED_LAMP 27
 #define BUZZER_PIN 14
-#define SECURITY_PIN 12
+#define SECURITY_PIN 5
 
 #define SENSOR_PIN 34
 float max_pressure = 8.0;
@@ -48,13 +48,14 @@ void loop()
   SecuritySensor::watchSensor(securitySensor, buzzer, redLamp, pressureSensor);
 
   // Check the sensor
-  if (securitySensor->isActive)
+
+  if (securitySensor->isActive())
   {
     int samples = 20;
     pressureSensor->readSensorSignal(samples);
     float pressure = pressureSensor->getPressure();
 
-    // Analize the current pressure
+    // Analyze the current pressure
     Lamp::toggleLeds(pressure, securitySensor);
     buzzer->beepBuzzer(pressure);
 
@@ -63,12 +64,11 @@ void loop()
   }
   else
   {
-    buzzer->beepState = false;
-    buzzer->turnOff();
-
-    redLamp->blinkState = false;
-    Lamp::turnOffLamps();
+    buzzer->reset();
+    Lamp::reset();
+    securitySensor->reset();
+    pressureSensor->readSensorSignal(0); // Reset the sensor signal
   }
 
-  delay(10);
+  delay(500);
 }
