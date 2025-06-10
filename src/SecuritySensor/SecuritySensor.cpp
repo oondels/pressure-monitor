@@ -25,13 +25,13 @@ void SecuritySensor::active()
   {
     this->lastState = HIGH;
     this->activeTime = millis();
-    Serial.println("active time set");
   }
 }
 
 void SecuritySensor::deactivate()
 {
   this->isOn = false;
+  this->alert = false;
   this->lastState = LOW;
   this->activeTime = 0;
   this->deactivateTime = millis();
@@ -101,7 +101,7 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
   // Check se o sinal do sensor esta chegando
   if (signal == HIGH)
   {
-    sensor->active();
+    sensor->transitionState(SensorState::ACTIVE);
   }
   else
   {
@@ -117,21 +117,12 @@ void SecuritySensor::watchSensor(SecuritySensor *sensor, Buzzer *buzzer, Lamp *l
     }
     else if (sensor->getDeactiveTime() >= DELAY_AFTER_ALERT || (signal == LOW && !sensor->alert))
     {
-      sensor->alert = false;
       sensor->transitionState(SensorState::INACTIVE);
     }
   }
 
-  // Verifica se o sensor de segurança esta ativo e grava
-  // o momento de ativação para comparação futura
-  if (sensor->isActive() && sensor->lastState == LOW && signal == HIGH)
-  {
-    Serial.println("Sensor activated");
-    sensor->transitionState(SensorState::ACTIVE);
-  }
-
   // Reseta se o sensor for desativado
-  else if (sensor->lastState && !sensor->isActive())
+  if (sensor->lastState && !sensor->isActive())
   {
     sensor->reset();
     sensor->lastState = !sensor->lastState;
