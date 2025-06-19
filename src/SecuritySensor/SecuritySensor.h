@@ -25,6 +25,7 @@ private:
   unsigned long limitActiveTime;
   unsigned long alertTime;
   unsigned long limitAlertTime;
+  bool alertTriggered;
 
 public:
   SecuritySensor(int pin);

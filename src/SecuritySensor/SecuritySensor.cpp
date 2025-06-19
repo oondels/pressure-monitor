@@ -4,7 +4,8 @@
 #define DELAY_AFTER_ALERT 6000
 
 SecuritySensor::SecuritySensor(int pin)
-    : pin(pin), isOn(false), lastState(LOW), activeTime(0), deactivateTime(0), alert(false), limitActiveTime(3000), alertTime(0), limitAlertTime(4000), lastAlertState(false)
+    : pin(pin), isOn(false), lastState(LOW), activeTime(0), deactivateTime(0), alert(false),
+      limitActiveTime(3000), alertTime(0), limitAlertTime(4000), lastAlertState(false), alertTriggered(false)
 {
   pinMode(this->pin, INPUT);
 }
@@ -72,6 +73,8 @@ void SecuritySensor::reset()
   this->lastSignal = LOW;
   this->deactivateTime = 0;
   this->activeTime = 0;
+  this->alertTriggered = false;
+  this->limitActiveTime = 3000; // Reset to default value
 }
 
 unsigned long SecuritySensor::getAlertTime()
@@ -115,6 +118,7 @@ void SecuritySensor::watchSensor(IAlertDevice &alertSystem, PressureSensor *pres
     return;
   }
 
+  // * Retirei o delay para que o alarme se mantenha acionado enquanto o sensor estiver ativo -> a limitação de tempo será apenas no Buzzer
   // Verifica se o tempo de alerta passou
   if (securitySensor->getAlertTime() >= securitySensor->limitAlertTime)
   {
@@ -150,8 +154,14 @@ void SecuritySensor::watchSensor(IAlertDevice &alertSystem, PressureSensor *pres
   if (securitySensor->isActive() && securitySensor->getActiveTime() >= securitySensor->limitActiveTime && pressureSensor->getPressure() < 5.0)
   {
     securitySensor->transitionState(SensorState::ALERT);
+    
 
-    alertSystem.triggerAlert();
+    // Só aciona o alarme se ainda não foi acionado nesta ativação
+    if (!securitySensor->alertTriggered)
+    {
+      alertSystem.triggerAlert();
+      securitySensor->alertTriggered = true; // Marca que o alarme já foi acionado
+    }
     return;
   }
 };

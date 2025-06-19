@@ -3,22 +3,19 @@
 #include "SecuritySensor/SecuritySensor.h"
 #include "Alert/IAlertDevice.h"
 
-class Buzzer : public IAlertDevice
+class Buzzer : public AudioAlertDevice
 {
 public:
-  Buzzer(int pin);
+  Buzzer(int pin, unsigned long beepInterval = 500);
   void turnOn();
   void turnOff();
   void test();
   void reset() override;
   void triggerAlert() override;
-  bool beepState;
-
+  void performBeep() override;
+  void update(); // Método para ser chamado no loop principal
 
 private:
   int pin;
-  bool isOn;
-  unsigned long lastBeepTime;
-  unsigned long beepInterval;
-  void beepBuzzer();
+  bool buzzerState;
 };

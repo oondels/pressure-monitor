@@ -5,15 +5,16 @@
 
 class SecuritySensor;
 
-class Lamp : public IAlertDevice
+class Lamp : public VisualAlertDevice
 {
 public:
   const char *name;
-  Lamp(int pin, const char *name);
+  Lamp(int pin, const char *name, unsigned long blinkInterval = 500);
   void turnOn();
-  bool blinkState;
   void reset() override;
   void triggerAlert() override;
+  void performBlink() override;
+  void update();
   
   static void test();
   static std::vector<Lamp *> lamps;
@@ -23,9 +24,6 @@ public:
   static void toggleLeds(float pressure, SecuritySensor *securitySensor);
   
   private:
-  void blinkAlert();
   int pin;
   bool isOn;
-  unsigned long lastBlinkTime;
-  unsigned long blinkInterval;
 };

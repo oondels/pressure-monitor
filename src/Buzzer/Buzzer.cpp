@@ -1,10 +1,10 @@
 #include "Buzzer.h"
 
-Buzzer::Buzzer(int pin)
-    : pin(pin), isOn(false), lastBeepTime(0), beepInterval(500), beepState(false)
+Buzzer::Buzzer(int pin, unsigned long beepInterval)
+    : AudioAlertDevice(beepInterval), pin(pin), buzzerState(false)
 {
   pinMode(pin, OUTPUT);
-  digitalWrite(pin, LOW);
+  digitalWrite(pin, HIGH);
 }
 
 void Buzzer::test()
@@ -17,41 +17,40 @@ void Buzzer::test()
 void Buzzer::reset()
 {
   this->beepState = false;
-  this->turnOff();
+  this->isActive = false;
   this->lastBeepTime = 0;
+  this->buzzerState = false;
+  this->turnOff();
 }
 
 void Buzzer::turnOn()
 {
-  this->isOn = true;
-  digitalWrite(pin, HIGH);
+  digitalWrite(pin, LOW);
+  buzzerState = true;
 }
 
 void Buzzer::turnOff()
 {
-  if (!this->beepState)
-  {
-    this->isOn = false;
-    digitalWrite(pin, LOW);
-  }
+  digitalWrite(pin, HIGH);
+  buzzerState = false;
 }
 
 void Buzzer::triggerAlert()
 {
+  this->isActive = true;
   this->beepState = true;
-  this->beepBuzzer();
 }
 
-void Buzzer::beepBuzzer()
+void Buzzer::performBeep()
 {
-  unsigned long currentMillis = millis();
+  buzzerState = !buzzerState;
+  digitalWrite(this->pin, buzzerState ? LOW : HIGH);
+}
 
-  this->beepState = true;
-  if (currentMillis - lastBeepTime >= beepInterval)
+void Buzzer::update()
+{
+  if (this->isActive && this->beepState)
   {
-    this->isOn = !this->isOn;
-    digitalWrite(this->pin, isOn ? HIGH : LOW);
-    lastBeepTime = currentMillis;
+    this->manageBeep();
   }
-  return;
 }

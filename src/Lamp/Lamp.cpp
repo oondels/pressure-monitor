@@ -8,8 +8,8 @@
 int Lamp::lampCount = 0;
 std::vector<Lamp *> Lamp::lamps;
 
-Lamp::Lamp(int pin, const char *name)
-    : pin(pin), name(name), isOn(false), lastBlinkTime(0), blinkInterval(500), blinkState(false)
+Lamp::Lamp(int pin, const char *name, unsigned long blinkInterval)
+    : VisualAlertDevice(blinkInterval), pin(pin), name(name), isOn(false)
 {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, HIGH); // Start with the lamp off
@@ -34,21 +34,17 @@ void Lamp::turnOn()
   }
 };
 
-void Lamp::blinkAlert()
-{
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastBlinkTime >= blinkInterval && blinkState)
-  {
-    isOn = isOn == 0 ? HIGH : LOW;
-    digitalWrite(pin, isOn == 0 ? HIGH : LOW);
-    lastBlinkTime = currentMillis;
-  }
-}
-
 void Lamp::triggerAlert()
 {
+  this->isActive = true;
   this->blinkState = true;
-  this->blinkAlert();
+  this->manageBlink();
+}
+
+void Lamp::performBlink()
+{
+  isOn = !isOn;
+  digitalWrite(pin, isOn ? LOW : HIGH);
 }
 
 // Static Methods
@@ -69,6 +65,7 @@ void Lamp::reset()
  {
   lamp->isOn = false;
   lamp->blinkState = false;
+  lamp->isActive = false;
   digitalWrite(lamp->pin, HIGH);
  }
 }
@@ -120,8 +117,8 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     Lamp *redLamp = getLampByName("Vermelho");
     if (redLamp)
     {
-      redLamp->blinkState = true;
-      redLamp->triggerAlert();
+      redLamp->turnOn();
+      redLamp->isOn = true;
     }
   }
 
@@ -140,5 +137,14 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     Lamp *greenLamp = getLampByName("Verde");
     if (greenLamp)
       greenLamp->turnOn();
+  }
+}
+
+
+void Lamp::update()
+{
+  if (this->isActive && this->blinkState)
+  {
+    this->manageBlink();
   }
 }
