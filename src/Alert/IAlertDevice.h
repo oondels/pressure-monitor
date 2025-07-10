@@ -52,8 +52,10 @@ protected:
   // Lógica comum de piscar
   void manageBlink()
   {
-    if (!blinkState)
+    if (!blinkState) {
+      Serial.println("Blink state is false, returning from manageBlink.");
       return;
+    }
 
     unsigned long currentMillis = millis();
     if (currentMillis - lastBlinkTime >= blinkInterval)
@@ -160,7 +162,7 @@ public:
     isActive = true;
     for (size_t i = 0; i < count; i++)
     {
-      Serial.println("Triggering alert for device: " + String(devices[i]->getTypeString()));
+      // Serial.println("Triggering alert for device: " + String(devices[i]->getTypeString()));
       devices[i]->triggerAlert();
     }
   }

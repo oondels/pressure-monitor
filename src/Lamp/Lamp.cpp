@@ -34,11 +34,12 @@ void Lamp::turnOn()
   }
 };
 
+// ! Corrigir erro que lampada nao esta piscando em alert mode
 void Lamp::triggerAlert()
 {
   this->isActive = true;
+  this->isOn = true;
   this->blinkState = true;
-  this->manageBlink();
 }
 
 void Lamp::performBlink()
@@ -53,7 +54,6 @@ void Lamp::test()
   for (Lamp *lamp : lamps)
   {
     digitalWrite(lamp->pin, LOW);
-    Serial.println(lamp->name);
     delay(500);
     digitalWrite(lamp->pin, HIGH);
   }
@@ -61,13 +61,13 @@ void Lamp::test()
 
 void Lamp::reset()
 {
- for (Lamp *lamp : lamps)
- {
-  lamp->isOn = false;
-  lamp->blinkState = false;
-  lamp->isActive = false;
-  digitalWrite(lamp->pin, HIGH);
- }
+  for (Lamp *lamp : lamps)
+  {
+    lamp->blinkState = false;
+    lamp->isActive = false;
+    lamp->isOn = false;
+    digitalWrite(lamp->pin, HIGH);
+  }
 }
 
 void Lamp::turnOffLamps()
@@ -76,7 +76,7 @@ void Lamp::turnOffLamps()
   {
     if (!lamp->blinkState)
     {
-      lamp->isOn = false;
+      lamp->isActive = false;
       lamp->blinkState = false;
       digitalWrite(lamp->pin, HIGH);
     }
@@ -105,6 +105,12 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
   // Reset the blink mode
   for (Lamp *lamp : lamps)
   {
+    if (lamp->name == "Vermelho" && lamp->isActive)
+    {
+      Serial.println("Red lamp is active, turning on.");
+      return;
+    }
+
     lamp->blinkState = false;
   }
 
@@ -118,7 +124,6 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     if (redLamp)
     {
       redLamp->turnOn();
-      redLamp->isOn = true;
     }
   }
 
@@ -128,7 +133,7 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
     if (yellowLamp)
     {
       yellowLamp->turnOn();
-      yellowLamp->isOn = true;
+      yellowLamp->isActive = true;
     }
   }
 
@@ -140,11 +145,11 @@ void Lamp::toggleLeds(float pressure, SecuritySensor *securitySensor)
   }
 }
 
-
 void Lamp::update()
 {
   if (this->isActive && this->blinkState)
   {
+    Serial.println("Managing blink for lamp: " + String(this->name));
     this->manageBlink();
   }
 }

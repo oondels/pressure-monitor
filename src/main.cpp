@@ -59,6 +59,8 @@ void loop()
     // Analyze the current pressure
     Lamp::toggleLeds(pressure, securitySensor);
     redLamp->update();
+    yellowLamp->update();
+    greenLamp->update();
     buzzer->update();
 
     // Log the current pressure

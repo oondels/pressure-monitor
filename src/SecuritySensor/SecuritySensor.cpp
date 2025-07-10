@@ -159,6 +159,7 @@ void SecuritySensor::watchSensor(IAlertDevice &alertSystem, PressureSensor *pres
     // Só aciona o alarme se ainda não foi acionado nesta ativação
     if (!securitySensor->alertTriggered)
     {
+      Serial.println("Alert triggered by SecuritySensor.");
       alertSystem.triggerAlert();
       securitySensor->alertTriggered = true; // Marca que o alarme já foi acionado
     }
